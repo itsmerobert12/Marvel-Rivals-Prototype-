@@ -21,6 +21,7 @@ export default function Leaderboard() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map((doc, index) => ({
         ...doc.data() as LeaderboardEntry,
+        userId: doc.id, // Ensure userId is the document ID for the key
         rank: index + 1
       }));
       setEntries(data);
@@ -89,12 +90,17 @@ export default function Leaderboard() {
                 </div>
               </motion.div>
             ))}
+            {entries.length === 0 && (
+              <motion.div 
+                key="no-entries"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-12 text-zinc-500"
+              >
+                No players on the leaderboard yet. Be the first!
+              </motion.div>
+            )}
           </AnimatePresence>
-          {entries.length === 0 && (
-            <div className="text-center py-12 text-zinc-500">
-              No players on the leaderboard yet. Be the first!
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>

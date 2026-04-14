@@ -145,7 +145,7 @@ export default function App() {
           </div>
 
           <AnimatePresence mode="wait">
-            <TabsContent value="database">
+            <TabsContent value="database" key="database">
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                 {!user && (
                   <div className="mb-8 p-6 bg-zinc-900/50 border border-zinc-800 rounded-xl flex flex-col md:flex-row items-center justify-between gap-6">
@@ -162,13 +162,13 @@ export default function App() {
               </motion.div>
             </TabsContent>
             
-            <TabsContent value="leaderboard">
+            <TabsContent value="leaderboard" key="leaderboard">
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                 <Leaderboard />
               </motion.div>
             </TabsContent>
 
-            <TabsContent value="profile">
+            <TabsContent value="profile" key="profile">
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                 {user && profile ? (
                   <UserProfileComponent profile={profile} matches={matches} />
@@ -185,7 +185,7 @@ export default function App() {
               </motion.div>
             </TabsContent>
 
-            <TabsContent value="advisor">
+            <TabsContent value="advisor" key="advisor">
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
                 {user && profile ? (
                   <AIAdvisor profile={profile} matches={matches} />
