@@ -1,0 +1,124 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: userId (UID)
+    // Fields:
+    //   - uid: string (required, immutable)
+    //   - displayName: string (required)
+    //   - email: string (required)
+    //   - photoURL: string (optional)
+    //   - role: string (enum: ['user', 'admin'])
+    //   - skillRating: number
+    //   - favoriteHero: string
+    //   - totalMatches: number
+    //   - winRate: number
+    //   - lastAnalyzed: string (ISO date)
+    //
+    // Collection: matches
+    // Document ID: matchId
+    // Fields:
+    //   - userId: string (required, immutable)
+    //   - heroId: string (required)
+    //   - damage: number
+    //   - healing: number
+    //   - damageBlocked: number
+    //   - eliminations: number
+    //   - deaths: number
+    //   - assists: number
+    //   - result: string (enum: ['win', 'loss', 'draw'])
+    //   - timestamp: string (ISO date)
+    //
+    // Collection: leaderboard
+    // Document ID: userId (UID)
+    // Fields:
+    //   - userId: string (required, immutable)
+    //   - displayName: string (required)
+    //   - skillRating: number (required)
+    //   - favoriteHero: string
+    //   - rank: number
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "robertogcanelo12@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'email']) &&
+             data.uid is string && data.uid.size() > 0 && data.uid.size() < 128 &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() < 50 &&
+             isValidEmail(data.email) &&
+             (!('role' in data) || data.role in ['user', 'admin']) &&
+             (!('skillRating' in data) || data.skillRating is number) &&
+             (!('totalMatches' in data) || data.totalMatches is number) &&
+             (!('winRate' in data) || data.winRate is number);
+    }
+
+    function isValidMatch(data) {
+      return data.keys().hasAll(['userId', 'heroId', 'timestamp']) &&
+             data.userId == request.auth.uid &&
+             data.heroId is string && data.heroId.size() < 50 &&
+             data.damage is number && data.damage >= 0 &&
+             data.healing is number && data.healing >= 0 &&
+             data.damageBlocked is number && data.damageBlocked >= 0 &&
+             data.eliminations is number && data.eliminations >= 0 &&
+             data.deaths is number && data.deaths >= 0 &&
+             data.assists is number && data.assists >= 0 &&
+             data.result in ['win', 'loss', 'draw'];
+    }
+
+    function isValidLeaderboard(data) {
+      return data.keys().hasAll(['userId', 'displayName', 'skillRating']) &&
+             data.userId == request.auth.uid &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() < 50 &&
+             data.skillRating is number;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == 'user' || isAdmin());
+      allow update: if isOwner(userId) && isValidUser(request.resource.data) && (request.resource.data.role == resource.data.role || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /matches/{matchId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidMatch(request.resource.data);
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid && isValidMatch(request.resource.data);
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    match /leaderboard/{userId} {
+      allow read: if true; // Public leaderboard
+      allow create, update: if isOwner(userId) && isValidLeaderboard(request.resource.data);
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+  }
+}

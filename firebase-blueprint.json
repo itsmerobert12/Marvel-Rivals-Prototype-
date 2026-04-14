@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and game statistics",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "skillRating": { "type": "number" },
+        "favoriteHero": { "type": "string" },
+        "totalMatches": { "type": "number" },
+        "winRate": { "type": "number" },
+        "lastAnalyzed": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName"]
+    },
+    "Match": {
+      "title": "Match",
+      "description": "Performance data for a single match",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "heroId": { "type": "string" },
+        "damage": { "type": "number" },
+        "healing": { "type": "number" },
+        "damageBlocked": { "type": "number" },
+        "eliminations": { "type": "number" },
+        "deaths": { "type": "number" },
+        "assists": { "type": "number" },
+        "result": { "type": "string", "enum": ["win", "loss", "draw"] },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "heroId", "timestamp"]
+    },
+    "LeaderboardEntry": {
+      "title": "LeaderboardEntry",
+      "description": "Public entry for the real-time leaderboard",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "skillRating": { "type": "number" },
+        "favoriteHero": { "type": "string" },
+        "rank": { "type": "number" }
+      },
+      "required": ["userId", "displayName", "skillRating"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Private user profiles"
+    },
+    "/matches/{matchId}": {
+      "schema": "Match",
+      "description": "Match history for performance analysis"
+    },
+    "/leaderboard/{userId}": {
+      "schema": "LeaderboardEntry",
+      "description": "Public leaderboard entries"
+    }
+  }
+}
